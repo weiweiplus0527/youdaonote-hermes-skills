@@ -6,7 +6,7 @@ hermes_adapted: true
 ---
 # YoudaoNote — 有道云笔记
 
-> **本机偏好**：默认保存格式为 B（.note + contentFormat: md）。用户未明确选择时选 B，不选 A。所有 .note 笔记默认检查并添加 `[[双链]]`。
+> **本机偏好**：默认保存格式为 B（.note + contentFormat: md）。用户未明确选择时选 B，不选 A。
 
 通过 `youdaonote` CLI 操作有道云笔记。覆盖笔记 CRUD、待办管理、网页剪藏全场景。
 
@@ -35,7 +35,7 @@ youdaonote -s ydn <command> [options]
 
 所有 `youdaonote` CLI 命令通过 Hermes 的 `terminal` 工具执行。需要写文件时使用 `write_file` 工具。
 
-`save` 命令的 contentFile 模式（默认 .note 格式，支持 `[[双链]]`）：
+`save` 命令的 contentFile 模式（默认 .note 格式）：
 1. 先用 `write_file` 将 Markdown 内容写入 `/tmp/note-content.md`
 2. 再用 `terminal` 执行 `printf '%s\n' '{"title":"标题.note","type":"note","contentFormat":"md","contentFile":"/tmp/note-content.md"}' | youdaonote -s ydn save --json`
 
@@ -71,15 +71,15 @@ youdaonote -s ydn <command> [options]
 
 ## 笔记管理
 
-**默认创建方式**：所有笔记一律使用 `save` 命令，格式为 `type: "note"` + `contentFormat: "md"`（.note 容器 + Markdown 内容），这样才能支持有道云笔记原生的 `[[双链]]` 应用内跳转。
+**默认创建方式**：所有笔记一律使用 `save` 命令，格式为 `type: "note"` + `contentFormat: "md"`（.note 容器 + Markdown 内容）。
 **禁止使用 `create` 命令保存包含 Markdown 格式的内容**（标题、列表、代码块、表格等）—— `create` 仅支持纯文本，会静默丢失所有格式。
 
 ### 格式选择
 
 当内容包含 Markdown 特征（`#` 标题、`**粗体**`、代码块、列表等），先询问用户选 A 或 B：
 
-- **A** Markdown 笔记（.md），`type: "md"` — 不支持 `[[双链]]` 跳转
-- **B** 有道专有格式（.note），`type: "note"`, `contentFormat: "md"` — 支持 `[[双链]]` 跳转（推荐）
+- **A** Markdown 笔记（.md），`type: "md"`
+- **B** 有道专有格式（.note），`type: "note"`, `contentFormat: "md"`（推荐，支持有道富文本编辑器）
 
 用户未明确选择时默认选 B（本机偏好。通用版默认 A，此处已覆盖）。
 
@@ -171,8 +171,8 @@ youdaonote -s ydn clip "https://example.com/article" -f <目录ID> --json  # 保
 
 ## 注意事项
 
-- **必须走完整 Skill 流程**：CLI 检测 → 格式检测 → A/B 询问 → contentFile 两步 → 双链检查
-- **默认格式为 .note**：所有笔记用 `type: "note"` + `contentFormat: "md"`，支持 `[[双链]]` 应用内跳转
+- **必须走完整 Skill 流程**：CLI 检测 → 格式检测 → A/B 询问 → contentFile 两步 → 交叉引用检查
+- **默认格式为 .note**：所有笔记用 `type: "note"` + `contentFormat: "md"`
 - 所有命令支持 `--json` 输出机器可解析格式
 - 大内容通过 `--file` 传递，避免命令行参数限制
 - `list` 输出的 `id` 与 `read` 的 `fileId` 等价
