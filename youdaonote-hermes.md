@@ -6,7 +6,7 @@ hermes_adapted: true
 ---
 # YoudaoNote — 有道云笔记
 
-> **本机偏好**：默认保存格式为 B（.note + contentFormat: md）。用户未明确选择时选 B，不选 A。
+> **本机偏好**：默认保存格式为 A（.md Markdown）。用户未明确选择时选 A。.md 格式支持 CLI update 直接修改内容。
 
 通过 `youdaonote` CLI 操作有道云笔记。覆盖笔记 CRUD、待办管理、网页剪藏全场景。
 
@@ -35,9 +35,9 @@ youdaonote -s ydn <command> [options]
 
 所有 `youdaonote` CLI 命令通过 Hermes 的 `terminal` 工具执行。需要写文件时使用 `write_file` 工具。
 
-`save` 命令的 contentFile 模式（默认 .note 格式）：
+`save` 命令的 contentFile 模式（默认 .md 格式，支持 CLI update）：
 1. 先用 `write_file` 将 Markdown 内容写入 `/tmp/note-content.md`
-2. 再用 `terminal` 执行 `printf '%s\n' '{"title":"标题.note","type":"note","contentFormat":"md","contentFile":"/tmp/note-content.md"}' | youdaonote -s ydn save --json`
+2. 再用 `terminal` 执行 `printf '%s\n' '{"title":"标题.md","type":"md","contentFile":"/tmp/note-content.md"}' | youdaonote -s ydn save --json`
 
 ## 命令速查
 
@@ -78,10 +78,10 @@ youdaonote -s ydn <command> [options]
 
 当内容包含 Markdown 特征（`#` 标题、`**粗体**`、代码块、列表等），先询问用户选 A 或 B：
 
-- **A** Markdown 笔记（.md），`type: "md"`
-- **B** 有道专有格式（.note），`type: "note"`, `contentFormat: "md"`（推荐，支持有道富文本编辑器）
+- **A** Markdown 笔记（.md），`type: "md"`（推荐，支持 CLI update）
+- **B** 有道专有格式（.note），`type: "note"`, `contentFormat: "md"`
 
-用户未明确选择时默认选 B（本机偏好。通用版默认 A，此处已覆盖）。
+用户未明确选择时默认选 A（本机偏好。通用版默认 A）。
 
 ### 笔记间引用（URL 链接）
 
@@ -111,18 +111,18 @@ youdaonote -s ydn <command> [options]
 
 避免 JSON 转义问题，大内容/含换行内容使用 contentFile 模式：
 
-**默认 B（.note，推荐）：**
-```
-Step 1：write_file 将 Markdown 写入 /tmp/note-content.md
-Step 2：terminal 执行：
-printf '%s\n' '{"title":"标题.note","type":"note","contentFormat":"md","contentFile":"/tmp/note-content.md","parentId":"文件夹ID"}' | youdaonote -s ydn save --json
-```
-
-**选 A（.md）：**
+**默认 A（.md，推荐）：**
 ```
 Step 1：write_file 将 Markdown 写入 /tmp/note-content.md
 Step 2：terminal 执行：
 printf '%s\n' '{"title":"标题.md","type":"md","contentFile":"/tmp/note-content.md","parentId":"文件夹ID"}' | youdaonote -s ydn save --json
+```
+
+**选 B（.note）：**
+```
+Step 1：write_file 将 Markdown 写入 /tmp/note-content.md
+Step 2：terminal 执行：
+printf '%s\n' '{"title":"标题.note","type":"note","contentFormat":"md","contentFile":"/tmp/note-content.md","parentId":"文件夹ID"}' | youdaonote -s ydn save --json
 ```
 
 短内容（无换行/特殊字符）可直接内联 content 字段，不用 contentFile。
@@ -172,7 +172,7 @@ youdaonote -s ydn clip "https://example.com/article" -f <目录ID> --json  # 保
 ## 注意事项
 
 - **必须走完整 Skill 流程**：CLI 检测 → 格式检测 → A/B 询问 → contentFile 两步 → 交叉引用检查
-- **默认格式为 .note**：所有笔记用 `type: "note"` + `contentFormat: "md"`
+- **默认格式为 .md**：所有笔记用 `type: "md"`，支持 CLI update 直接修改
 - 所有命令支持 `--json` 输出机器可解析格式
 - 大内容通过 `--file` 传递，避免命令行参数限制
 - `list` 输出的 `id` 与 `read` 的 `fileId` 等价
