@@ -74,14 +74,9 @@ youdaonote -s ydn <command> [options]
 **默认创建方式**：所有笔记一律使用 `save` 命令，格式为 `type: "note"` + `contentFormat: "md"`（.note 容器 + Markdown 内容）。
 **禁止使用 `create` 命令保存包含 Markdown 格式的内容**（标题、列表、代码块、表格等）—— `create` 仅支持纯文本，会静默丢失所有格式。
 
-### 格式选择
+### 保存格式
 
-当内容包含 Markdown 特征（`#` 标题、`**粗体**`、代码块、列表等），先询问用户选 A 或 B：
-
-- **A** Markdown 笔记（.md），`type: "md"`（推荐，支持 CLI update）
-- **B** 有道专有格式（.note），`type: "note"`, `contentFormat: "md"`
-
-用户未明确选择时默认选 A（本机偏好。通用版默认 A）。
+所有笔记一律使用 `type: "md"`（Markdown），无需询问用户。.md 格式支持 CLI update 直接修改。
 
 ### 笔记间引用（URL 链接）
 
@@ -98,31 +93,21 @@ youdaonote -s ydn <command> [options]
 **绝对禁止绕过 Skill 标准流程直接手写 CLI 命令。** 每条 youdaonote 操作必须走完整流程：
 
 1. `youdaonote -s ydn list` — 检测 CLI 可用性
-2. 检测内容是否含 Markdown 特征（`#`、`**`、代码块、列表等）
-3. 含 Markdown 特征 → 询问用户选 A/B
-4. contentFile 两步模式：`write_file` 写 `/tmp/` 临时文件 → `terminal` 执行 `printf | youdaonote -s ydn save --json`
-5. 交叉引用检查：已存在笔记用 `[标题](url)` 链接，不存在用 `→ 标题` 占位
+2. contentFile 两步模式：`write_file` 写 `/tmp/` 临时文件 → `terminal` 执行 `printf | youdaonote -s ydn save --json`
+3. 交叉引用检查：已存在笔记用 `[标题](url)` 链接，不存在用 `→ 标题` 占位
 
 **常见违规**：Agent 因对 CLI 命令熟悉，直接调用 `terminal` 一步完成 save，跳过检测和询问步骤。
 
-**合规做法**：即便临时文件已存在，仍须显式执行检测和询问，不可省略。
+**合规做法**：即便临时文件已存在，仍须显式执行检测，不可省略。
 
 ### contentFile 模式
 
 避免 JSON 转义问题，大内容/含换行内容使用 contentFile 模式：
 
-**默认 A（.md，推荐）：**
 ```
 Step 1：write_file 将 Markdown 写入 /tmp/note-content.md
 Step 2：terminal 执行：
 printf '%s\n' '{"title":"标题.md","type":"md","contentFile":"/tmp/note-content.md","parentId":"文件夹ID"}' | youdaonote -s ydn save --json
-```
-
-**选 B（.note）：**
-```
-Step 1：write_file 将 Markdown 写入 /tmp/note-content.md
-Step 2：terminal 执行：
-printf '%s\n' '{"title":"标题.note","type":"note","contentFormat":"md","contentFile":"/tmp/note-content.md","parentId":"文件夹ID"}' | youdaonote -s ydn save --json
 ```
 
 短内容（无换行/特殊字符）可直接内联 content 字段，不用 contentFile。
@@ -159,6 +144,18 @@ youdaonote -s ydn clip "https://example.com/article" -f <目录ID> --json  # 保
 | `config-file` / `api-key` | `youdaonote config set apiKey YOUR_KEY` |
 | `mcp-connection` | API Key 有效但网络不通，提示用户检查网络或稍后重试 |
 
+## CLI 能力边界
+
+以下操作**不能**通过 CLI 完成，遇到相关请求时明确告知用户：
+
+| 不支持的操作 | 原因 | 替代方案 |
+|------------|------|---------|
+| 脑图笔记 | `createAnyNote` 不接受 mindmap 类型 | 创建层级大纲（.md），用户在客户端转脑图 |
+| `[[双链]]` | 双链是编辑器交互功能（输入 `[[` 触发选择器），非文本格式 | 用 `[标题](url)` Markdown 链接 |
+| 文件夹删除/重命名 | MCP 无对应工具 | 无 |
+| 更新 .note 笔记 | `updateMarkdownNote` 仅支持 .md | 删除后重建，或统一用 .md |
+| 白板笔记 | MCP 无对应工具 | 无 |
+
 ## Hermes 环境陷阱
 
 ### 不要在 execute_code 沙箱里调用 CLI
@@ -171,8 +168,8 @@ youdaonote -s ydn clip "https://example.com/article" -f <目录ID> --json  # 保
 
 ## 注意事项
 
-- **必须走完整 Skill 流程**：CLI 检测 → 格式检测 → A/B 询问 → contentFile 两步 → 交叉引用检查
-- **默认格式为 .md**：所有笔记用 `type: "md"`，支持 CLI update 直接修改
+- **必须走完整 Skill 流程**：CLI 检测 → contentFile 两步 → 交叉引用检查
+- **统一使用 .md 格式**：`type: "md"`，支持 CLI update 直接修改，无需询问用户
 - 所有命令支持 `--json` 输出机器可解析格式
 - 大内容通过 `--file` 传递，避免命令行参数限制
 - `list` 输出的 `id` 与 `read` 的 `fileId` 等价
