@@ -19,6 +19,8 @@ hermes_adapted: true
 
 **独特优势**：知识库存储在有道云笔记云端，天然**多端同步、随时可查**，不限于本地开发环境。
 
+> **适配说明**：本 Skill 从官方版本适配到 Hermes。适配方法论见 youdaonote Skill 的 `references/hermes-adaptation.md`。
+
 ## 前置条件
 
 1. **youdaonote CLI 可用**：运行 `youdaonote list` 确认 CLI 已安装且 API Key 已配置
@@ -147,10 +149,26 @@ printf '%s\n' '{
 
 ### 交叉引用
 
-云端笔记不支持 `[[wikilinks]]`，使用以下约定：
+两层引用体系，同时使用：
 
-- 文中提到其他 Wiki 页面时，使用 **`→ 页面标题`** 标记（如 `→ self-attention`）
+**原生双链（人类可点击）：**
+- 有道云笔记 MD 格式笔记支持原生双链 `[[笔记标题]]`，在客户端/网页端可直接点击跳转
+- 写入 Wiki 页面时，已创建且有确定标题的页面，优先使用双链格式（如 `[[agent-architecture.md]]`）
+- 仅对尚未创建的页面使用 `→ page-name` 文本标记，创建后替换为 `[[...]]`
+
+**Agent 引用标记（机器可检索）：**
+- `→ 页面标题` 用于 Ingest 报告和 Agent 内部导航
 - Agent 通过 index.md 或 `youdaonote -s wiki search` 定位被引用页面
+
+**反向链接（被引用段）：**
+- 每个 Wiki 页面末尾应有 `## 被引用` 段，用 `← [[源页面.md]]` 记录谁引用了自己
+- 被引用的页面被更新后，同时更新引用者页面的 `被引用` 段——这是双向链接的关键
+- 示例：
+  ```
+  ## 被引用
+  ← [[huggingface.md]]
+  ← [[context-engineering.md]]
+  ```
 
 ## 初始化 Wiki
 
@@ -337,8 +355,9 @@ printf '%s\n' '{
 youdaonote -s wiki update <fileId> --file updated-content.md
 ```
 
-**④ 更新导航**：
-- 在 index.md 中添加新页面条目（`youdaonote -s wiki update <indexFileId> ...`）
+**④ 更新导航和反向链接**：
+- 在 index.md 中添加新页面条目
+- 检查所有被 `→` 或 `[[...]]` 引用的已有页面，在它们的「被引用」段追加 `← [[新页面.md]]`
 - 在 log.md 中追加操作记录
 
 **⑤ 报告变更**——列出创建和更新的所有笔记。
@@ -411,6 +430,7 @@ youdaonote -s wiki list -f <QUERY_ID>         # 查询
 - **孤立页面**：检查页面内容中的 `→` 交叉引用，找出没有被任何其他页面引用的页面
 - **数据空白**：被引用但尚无专门页面的主题
 - **Index 完整性**：每个 Wiki 页面都应出现在 index.md 中
+- **反向链接一致性**：检查 `→ / [[...]]` 正向引用与 `被引用` 段是否匹配，标记单向断裂
 
 **⑤ 报告发现**，给出具体笔记标题和建议操作。
 
